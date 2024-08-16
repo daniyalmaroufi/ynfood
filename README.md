@@ -10,3 +10,8 @@ Then just wait to see all reservations in the sidebar. It needs 10 seconds to re
 
 [Dani Food Reservation](https://narijeh.daniserver.ir/)
 
+# TODO
+- [ ] Show food name instead of FoodId in logs
+- [ ] Mark Hollidays
+- [ ] Feature to remove Reserves
+
