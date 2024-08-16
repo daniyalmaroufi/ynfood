@@ -1,6 +1,8 @@
 # ynfood
 Yektanet Food Reservation
 
+![Screenshot](./image.png)
+
 # Usage
 open the `index.html` in a web browser and start reserving your food after logging in. 
 
