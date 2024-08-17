@@ -119,11 +119,21 @@
             console.log(`Successfully reserved ${food.foodId} for ${date}.`);
             const reservationLogs = document.querySelector('.reservationLogs');
             reservationLogs.appendChild(document.createElement('p')).textContent = `عذای ${food.foodId} با موفقیت برای تاریخ ${toJalali(date)} رزرو شد.`;
+
+            const btn = document.querySelector(`.select-food-btn[data-food-id="${food.foodId}"][data-day="${date}"]`);
+            btn.disabled = true;
+            btn.textContent = 'Reserved';
             
         } else {
             console.error(`Failed to reserve food: ${responseData["message"]}, date: ${date}`);
             const reservationLogs = document.querySelector('.reservationLogs');
             reservationLogs.appendChild(document.createElement('p')).textContent = `خطا در رزرو غذا: ${responseData["message"]}, در تاریخ: ${toJalali(date)}.`;
+
+            const btn = document.querySelector(`.select-food-btn[data-food-id="${food.foodId}"][data-day="${date}"]`);
+            btn.classList.toggle('selected');
+            btn.classList.toggle('btn-success');
+            btn.classList.toggle('btn-primary');
+            btn.textContent = 'Select';
         }
     }
 
