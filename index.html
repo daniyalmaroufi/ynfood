@@ -11,11 +11,30 @@
     </head>
 
     <body>
+        <nav class="navbar navbar-light bg-light">
+            <div>
+                <a class="navbar-brand" href="#">
+                    <img
+                        class="d-inline-block align-top rounded-circle"
+                        src="https://daniserver.ir/header-logo.php"
+                        width="30"
+                        height="30"
+                        alt="logo"
+                    />
+                    Dani Food Reservation
+                </a>
+            </div>
+
+            <button
+                type="button"
+                id="logout-button"
+                class="btn btn-danger d-none"
+            >
+                Logout
+            </button>
+        </nav>
+
         <div class="container mt-5">
-            <h2 class="text-center">Dani Food Reservation</h2>
-
-            <h3 class="text-center">Shahrivar</h3>
-
             <div class="row">
                 <div class="col-lg-9">
                     <div id="food-container" class="row"></div>
