@@ -1,8 +1,17 @@
-var reservationQueue = [];
+var RESERVATION_QUEUE = [];
 
 let NARIJE_TOKEN = '';
 
 const BASE_API_URL = 'https://api.narijeh.com';
+
+let START_DAY = moment();
+
+const BUTTON_STATES = {
+    SELECTED: 'SELECTED',
+    RESERVED: 'RESERVED',
+};
+
+const LOGS_CONTAINER = $('#reservation-logs');
 
 function saveTokenToStorate(token, expire) {
     const expireDate = Date.now() + expire * 1000;
@@ -52,65 +61,141 @@ async function fetchApi({ url, method = 'GET', headers, body }) {
     });
 }
 
-function toJalali(date) {
-    const gregorianDate = new Date(date);
-    const jalaaliDate = jalaali.toJalaali(gregorianDate);
-    const monthNames = [
-        'فروردین',
-        'اردیبهشت',
-        'خرداد',
-        'تیر',
-        'مرداد',
-        'شهریور',
-        'مهر',
-        'آبان',
-        'آذر',
-        'دی',
-        'بهمن',
-        'اسفند',
-    ];
-    const weekDay = gregorianDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-    });
-    const weekDays = {
-        Saturday: 'شنبه',
-        Sunday: 'یکشنبه',
-        Monday: 'دوشنبه',
-        Tuesday: 'سه‌شنبه',
-        Wednesday: 'چهارشنبه',
-        Thursday: 'پنج‌شنبه',
-        Friday: 'جمعه',
-    };
-    const jalaaliWeekDay = weekDays[weekDay];
-    const month = monthNames[jalaaliDate.jm - 1];
-    return `${jalaaliWeekDay} ${jalaaliDate.jd} ${
-        monthNames[jalaaliDate.jm - 1]
-    }`;
+function toJalali(date, format = 'ddd DD MMMM') {
+    return moment(date).locale('fa').format(format);
 }
 
-function selectFood(foodId, day) {
-    const btn = document.querySelector(
-        `.select-food-btn[data-food-id="${foodId}"][data-day="${day}"]`
+function setCurrentMonthName() {
+    $('#current-month').html(
+        START_DAY.clone().locale('fa').format('MMMM YYYY'),
     );
-    btn.classList.toggle('selected');
-    btn.classList.toggle('btn-success');
-    btn.classList.toggle('btn-primary');
-    btn.textContent = btn.classList.contains('selected')
-        ? 'Selected'
-        : 'Select';
+}
 
-    if (btn.classList.contains('selected')) {
-        reservationQueue.push({ date: day, foodId });
-    } else {
-        reservationQueue = reservationQueue.filter(
-            (reservation) => reservation.foodId !== foodId
+function isInSameMonth(firstMoment, secondMoment) {
+    return (
+        firstMoment.jYear() === secondMoment.jYear() &&
+        firstMoment.jMonth() === secondMoment.jMonth()
+    );
+}
+
+function changeMonth(step) {
+    if (RESERVATION_QUEUE.length) return;
+
+    const now = moment();
+
+    if (step < 0 && isInSameMonth(now, START_DAY)) {
+        return;
+    }
+
+    START_DAY.add(step, 'jMonth').startOf('jMonth');
+
+    if (isInSameMonth(now, START_DAY)) {
+        START_DAY = now;
+    }
+
+    setCurrentMonthName();
+
+    getFoods();
+}
+
+function getFoodButton({ foodId, date, state }) {
+    let selector = `button`;
+
+    if (foodId) {
+        selector += `[data-food-id='${foodId}']`;
+    }
+
+    if (date) {
+        selector += `[data-date='${date}']`;
+    }
+
+    if (state) {
+        selector += `[data-state="${state}"]`;
+    }
+
+    return $(selector);
+}
+
+function changeButtonState(button, state) {
+    if (state === BUTTON_STATES.SELECTED) {
+        button.addClass('btn-info');
+
+        button.removeClass('btn-primary btn-success');
+
+        button.html(`
+            در صف رزرو
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+        `);
+
+        button.attr('data-state', BUTTON_STATES.SELECTED);
+
+        button.removeAttr('disabled', true);
+
+        return;
+    }
+
+    if (state === BUTTON_STATES.RESERVED) {
+        button.addClass('btn-success');
+
+        button.removeClass('btn-primary btn-info');
+
+        button.html('رزرو شده');
+
+        button.attr('data-state', BUTTON_STATES.RESERVED);
+
+        button.attr('disabled', true);
+
+        return;
+    }
+
+    button.addClass('btn-primary');
+
+    button.removeClass('btn-success btn-info');
+
+    button.html('انتخاب');
+
+    button.removeAttr('data-state disabled');
+}
+
+// TODO: if day has selected food remove it from queue
+function selectFood(food, date) {
+    const button = getFoodButton({ date, foodId: food.foodId });
+
+    const state = button.attr('data-state');
+
+    if (state === BUTTON_STATES.RESERVED) return;
+
+    if (state === BUTTON_STATES.SELECTED) {
+        changeButtonState(button);
+
+        RESERVATION_QUEUE = RESERVATION_QUEUE.filter(
+            (reservation) => reservation.food.foodId !== food.foodId,
         );
+    } else {
+        changeButtonState(button, BUTTON_STATES.SELECTED);
+
+        RESERVATION_QUEUE.push({ food, date });
     }
 }
 
-async function reserveFood(date, food) {
+function addReserveLog({ type, foodName, date, text }) {
+    const log = $('<div>', {
+        class: 'alert mb-3',
+        html: `
+            <div class="alert-heading">${foodName}</div>
+            <small>${toJalali(date)}</small>
+            <div>${text}</div>
+        `,
+    });
+
+    log.addClass(type === 'success' ? 'alert-success' : 'alert-danger');
+
+    LOGS_CONTAINER.prepend(log);
+}
+
+async function reserveFood({ food: { food: foodName, foodId }, date }) {
     const response = await fetchApi({
-        url: "user/reserves",
+        url: 'user/reserves',
         method: 'PUT',
         headers: {
             authorization: `Bearer ${NARIJE_TOKEN}`,
@@ -121,7 +206,7 @@ async function reserveFood(date, food) {
                 datetime: date,
                 reserves: [
                     {
-                        foodId: food.foodId,
+                        foodId,
                         qty: 1,
                         foodType: 0,
                     },
@@ -129,50 +214,48 @@ async function reserveFood(date, food) {
             },
         ],
     });
-    const responseData = await response.json();
-    if (response.status === 200) {
-        console.log(`Successfully reserved ${food.foodId} for ${date}.`);
-        const reservationLogs = document.querySelector('.reservationLogs');
-        reservationLogs.appendChild(
-            document.createElement('p')
-        ).textContent = `عذای ${food.foodId} با موفقیت برای تاریخ ${toJalali(
-            date
-        )} رزرو شد.`;
 
-        const btn = document.querySelector(
-            `.select-food-btn[data-food-id="${food.foodId}"][data-day="${date}"]`
-        );
-        btn.disabled = true;
-        btn.textContent = 'Reserved';
+    const responseData = await response.json();
+
+    const button = getFoodButton({ foodId, date });
+
+    if (response.status === 200) {
+        console.log(`Successfully reserved ${foodId} for ${date}.`);
+
+        addReserveLog({
+            date,
+            foodName,
+            type: 'success',
+            text: 'با موفقیت رزرو شد',
+        });
+
+        changeButtonState(button, BUTTON_STATES.RESERVED);
     } else {
         console.error(
-            `Failed to reserve food: ${responseData['message']}, date: ${date}`
+            `Failed to reserve food: ${responseData['message']}, date: ${date}`,
         );
-        const reservationLogs = document.querySelector('.reservationLogs');
-        reservationLogs.appendChild(
-            document.createElement('p')
-        ).textContent = `خطا در رزرو غذا: ${
-            responseData['message']
-        }, در تاریخ: ${toJalali(date)}.`;
 
-        const btn = document.querySelector(
-            `.select-food-btn[data-food-id="${food.foodId}"][data-day="${date}"]`
-        );
-        btn.classList.toggle('selected');
-        btn.classList.toggle('btn-success');
-        btn.classList.toggle('btn-primary');
-        btn.textContent = 'Select';
+        addReserveLog({
+            date,
+            foodName,
+            type: 'error',
+            text: responseData['message'],
+        });
+
+        changeButtonState(button);
     }
 }
 
 async function getBearerToken(username, password) {
     const response = await fetchApi({
-        url: "v1/Login",
+        url: 'v1/Login',
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: { mobile: username, password: password, panel: 'user' },
+        body: { mobile: username, password, panel: 'user' },
     });
+
     const responseData = await response.json();
+
     if (response.status === 200) {
         return responseData;
     } else {
@@ -181,119 +264,139 @@ async function getBearerToken(username, password) {
     }
 }
 
+function createFoodCard(food, date) {
+    const foodCard = $('<div>', {
+        class: 'card col-lg-4 p-1',
+        html: `
+            <img loading="lazy" class="card-img-top rounded" src="${
+                food.image || 'http://danihost.ir/da512.png'
+            }" alt="${food.food}" width="100%" height="200">
+                        
+            <div class="card-body d-flex flex-column justify-content-between">
+                <h5 class="card-title text-right">${food.food}</h5>
+            </div>
+        `,
+    });
+
+    const isReserved = food.qty === 1;
+
+    const selectButton = $('<button>', {
+        class: "btn d-block w-100",
+        text: isReserved ? 'رزرو شده' : 'انتخاب',
+        click: () => selectFood(food, date),
+        'data-food-id': food.foodId,
+        'data-date': date,
+        disabled: isReserved,
+    });
+
+    selectButton.addClass(isReserved ? "btn-success" : "btn-primary");
+
+    if (isReserved) {
+        selectButton.attr('data-state', BUTTON_STATES.RESERVED);
+    }
+
+    foodCard.find('.card-body').append(selectButton);
+
+    return foodCard;
+}
+
 function getFoods() {
-    const date = new Date();
+    LOGS_CONTAINER.empty();
 
-    const fromDate = date.toISOString();
+    const foodContainer = $('#food-container');
 
-    date.setMonth(date.getMonth() + 1);
+    foodContainer.empty();
 
-    const toDate = date.toISOString();
+    const fromDate = START_DAY.format('YYYY-MM-DD');
 
-    fetchApi(
-        {
-            url: `user/reserves?fromDate=${fromDate}&toDate=${toDate}`,
-            headers: {
-                accept: 'application/json, text/plain, */*',
-                'accept-language': 'en-US,en;q=0.9',
-                authorization: 'Bearer ' + NARIJE_TOKEN,
-                dnt: '1',
-                origin: 'https://my.narijeh.com',
-                priority: 'u=1, i',
-                referer: 'https://my.narijeh.com/',
-                'sec-ch-ua':
-                    '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Linux"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-site',
-                'sec-gpc': '1',
-                'user-agent':
-                    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
-            },
-        }
-    )
+    const toDate = START_DAY.clone().endOf('jMonth').format('YYYY-MM-DD');
+
+    fetchApi({
+        url: `user/reserves?fromDate=${fromDate}&toDate=${toDate}`,
+        headers: {
+            accept: 'application/json, text/plain, */*',
+            'accept-language': 'en-US,en;q=0.9',
+            authorization: 'Bearer ' + NARIJE_TOKEN,
+            dnt: '1',
+            origin: 'https://my.narijeh.com',
+            priority: 'u=1, i',
+            referer: 'https://my.narijeh.com/',
+            'sec-ch-ua':
+                '"Not)A;Brand";v="99", "Microsoft Edge";v="127", "Chromium";v="127"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Linux"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'sec-gpc': '1',
+            'user-agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36 Edg/127.0.0.0',
+        },
+    })
         .then((response) => response.json())
         .then((apiData) => {
-            const foodContainer = document.getElementById('food-container');
-
             apiData.data.forEach((day) => {
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'col-lg-12 mb-4';
-                dayDiv.innerHTML = `<h4 style="direction: rtl;">${toJalali(
-                    day.datetime
-                )}</h4>`;
+                const dayContainer = $('<div>');
 
-                // add a row div
-                const dayRowDiv = document.createElement('div');
-                dayRowDiv.className = 'row';
-                dayDiv.appendChild(dayRowDiv);
+                const hasFood = !!day.reserves?.length;
 
-                day.reserves.forEach((food) => {
-                    const foodDiv = document.createElement('div');
-                    foodDiv.className = 'col-lg-4 mb-3';
-                    foodDiv.innerHTML = `
-                    <div class="card-body">
-                        <h5 class="card-title">${food.food}</h5>
-                        <img src="${
-                            food.image || 'http://danihost.ir/da512.png'
-                        }" class="img-fluid mb-2" alt="${
-                        food.food
-                    }" width="100%"> <br>
-                        <button class="btn btn-primary select-food-btn" data-food-id="${
-                            food.foodId
-                        }" data-day="${
-                        day.datetime
-                    }" style="width: 100%" onclick="selectFood(${
-                        food.foodId
-                    }, '${day.datetime}')">Select</button>
-                    </div>
-                `;
-
-                    if (food.qty === 1) {
-                        const selectBtn =
-                            foodDiv.querySelector('.select-food-btn');
-                        selectBtn.disabled = true;
-                        selectBtn.textContent = 'Reserved';
-                    }
-                    dayRowDiv.appendChild(foodDiv);
+                const dayHeader = $('<h4>', {
+                    class: `mb-4 text-right ${!hasFood ? 'text-danger' : ''}`,
+                    text: toJalali(day.datetime),
                 });
 
-                foodContainer.appendChild(dayDiv);
+                dayContainer.append(dayHeader);
+
+                if (hasFood) {
+                    const dayFoodsRow = $('<div>', {
+                        class: 'row justify-content-center flex-nowrap',
+                        style: 'gap: 0.5rem',
+                    });
+
+                    day.reserves.forEach((food) => {
+                        dayFoodsRow.append(createFoodCard(food, day.datetime));
+                    });
+
+                    dayContainer.append(dayFoodsRow);
+                }
+
+                foodContainer.append(
+                    dayContainer,
+                    $('<hr>', { class: 'my-3' }),
+                );
             });
         });
 }
 
-document
-    .getElementById('login-form')
-    .addEventListener('submit', function (event) {
-        event.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+$('#login-form').on('submit', function (event) {
+    event.preventDefault();
 
-        getBearerToken(username, password)
-            .then((data) => {
-                NARIJE_TOKEN = data.token;
+    const formData = new FormData(event.target);
 
-                saveTokenToStorate(data.token, data.expire);
+    getBearerToken(formData.get('username'), formData.get('password')).then(
+        (data) => {
+            NARIJE_TOKEN = data.token;
 
-                toggleLogoutButton(true);
-            })
-            .then(() => {
-                $('#loginModal').modal('hide');
-                getFoods();
-            });
-    });
+            saveTokenToStorate(data.token, data.expire);
+
+            toggleLogoutButton(true);
+
+            $('#loginModal').modal('hide');
+
+            getFoods();
+        },
+    );
+});
 
 function processReservationQueue() {
-    if (reservationQueue.length > 0) {
-        const { date, foodId } = reservationQueue.shift();
-        reserveFood(date, { foodId });
-    }
+    if (!RESERVATION_QUEUE.length) return;
+
+    reserveFood(RESERVATION_QUEUE.shift());
 }
 
 setInterval(processReservationQueue, 11000);
+
+setCurrentMonthName();
 
 document.addEventListener('DOMContentLoaded', function () {
     NARIJE_TOKEN = getTokenFromStorate();
