@@ -34,35 +34,61 @@
             </button>
         </nav>
 
-        <div class="container mt-5">
+        <div class="container-md mt-3">
             <div class="row">
                 <div class="col-lg-9">
-                    <div id="food-container" class="row"></div>
+                    <div id="month-control" class="d-flex mb-3">
+                        <button
+                            id="previous-month"
+                            class="flex-shrink-0 btn btn-success"
+                            title="ماه قبلی"
+                            onclick="changeMonth(-1)"
+                        >
+                            &lt;
+                        </button>
+
+                        <h3
+                            id="current-month"
+                            class="flex-grow-1 text-center"
+                        ></h3>
+
+                        <button
+                            id="next-month"
+                            class="flex-shrink-0 btn btn-success"
+                            title="ماه بعدی"
+                            onclick="changeMonth(1)"
+                        >
+                            &gt;
+                        </button>
+                    </div>
+
+                    <hr />
+
+                    <div id="food-container"></div>
                 </div>
 
                 <div class="col-lg-3">
                     <div
-                        class="reservationLogs"
-                        style="direction: rtl; text-align: right"
+                        id="reservation-logs"
+                        class="text-right sticky-top overflow-auto p-2"
+                        style="direction: rtl; max-height: 90vh;"
                     ></div>
                 </div>
             </div>
 
-            <div class="row mb-6">
-                <div class="col-12 text-center">
-                    <p>
-                        Created by
-                        <a href="https://daniyalmaroufi.com" target="_blank"
-                            >Daniyal Maroufi</a
-                        >.
-                        <a
-                            href="https://github.com/daniyalmaroufi/ynfood"
-                            target="_blank"
-                            >Source(Github)</a
-                        >
-                    </p>
+            <footer class="fixed-bottom bg-light p-2">
+                <div class="text-center">
+                    Created by
+                    <a href="https://daniyalmaroufi.com" target="_blank"
+                        >Daniyal Maroufi</a
+                    >.
+                    <a
+                        href="https://github.com/daniyalmaroufi/ynfood"
+                        target="_blank"
+                        >Source(Github)</a
+                    >
                 </div>
-            </div>
+            </footer>
         </div>
 
         <!-- Login Modal -->
@@ -95,8 +121,8 @@
 
                                 <input
                                     type="text"
+                                    name="username"
                                     class="form-control"
-                                    id="username"
                                     required
                                 />
                             </div>
@@ -106,8 +132,8 @@
 
                                 <input
                                     type="password"
+                                    name="password"
                                     class="form-control"
-                                    id="password"
                                     required
                                 />
                             </div>
@@ -123,7 +149,7 @@
 
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
+        <script src="https://unpkg.com/jalali-moment/dist/jalali-moment.browser.js"></script>
         <script src="./script.js"></script>
     </body>
 </html>
