@@ -11,7 +11,7 @@ const BUTTON_STATES = {
     RESERVED: 'RESERVED',
 };
 
-const LOGS_CONTAINER = $('#reservation-logs');
+const LOGS_CONTAINER = $('#toast-container');
 
 function saveTokenToStorate(token, expire) {
     const expireDate = Date.now() + expire * 1000;
@@ -179,18 +179,32 @@ function selectFood(food, date) {
 }
 
 function addReserveLog({ type, foodName, date, text }) {
+    const isSuccess = type === 'success';
+
     const log = $('<div>', {
-        class: 'alert mb-3',
+        class: 'alert alert-dismissible text-right fade show',
         html: `
-            <div class="alert-heading">${foodName}</div>
-            <small>${toJalali(date)}</small>
+            <div class="alert-heading">
+                <button type="button" class="close ml-2" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+
+                <strong>${toJalali(date)}</strong>
+            </div>
+
+            <small>${foodName}</small>
+
+            <hr class="mt-1 mb-1" />
+
             <div>${text}</div>
         `,
     });
 
-    log.addClass(type === 'success' ? 'alert-success' : 'alert-danger');
+    log.addClass(isSuccess ? 'alert-success' : 'alert-danger');
 
     LOGS_CONTAINER.prepend(log);
+
+    isSuccess && setTimeout(() => log.alert('close'), 5000);
 }
 
 async function reserveFood({ food: { food: foodName, foodId }, date }) {
@@ -266,7 +280,7 @@ async function getBearerToken(username, password) {
 
 function createFoodCard(food, date) {
     const foodCard = $('<div>', {
-        class: 'card col-lg-4 p-1',
+        class: 'card col-lg-3 p-1',
         html: `
             <img loading="lazy" class="card-img-top rounded" src="${
                 food.image || 'http://danihost.ir/da512.png'
@@ -281,7 +295,7 @@ function createFoodCard(food, date) {
     const isReserved = food.qty === 1;
 
     const selectButton = $('<button>', {
-        class: "btn d-block w-100",
+        class: 'btn d-block w-100',
         text: isReserved ? 'رزرو شده' : 'انتخاب',
         click: () => selectFood(food, date),
         'data-food-id': food.foodId,
@@ -289,7 +303,7 @@ function createFoodCard(food, date) {
         disabled: isReserved,
     });
 
-    selectButton.addClass(isReserved ? "btn-success" : "btn-primary");
+    selectButton.addClass(isReserved ? 'btn-success' : 'btn-primary');
 
     if (isReserved) {
         selectButton.attr('data-state', BUTTON_STATES.RESERVED);
@@ -349,7 +363,7 @@ function getFoods() {
 
                 if (hasFood) {
                     const dayFoodsRow = $('<div>', {
-                        class: 'row justify-content-center flex-nowrap',
+                        class: 'row justify-content-center flex-nowrap p-2',
                         style: 'gap: 0.5rem',
                     });
 
