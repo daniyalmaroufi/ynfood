@@ -84,7 +84,7 @@
                     >
                         <img
                             src="./assets/github.svg"
-                            alt="Github"
+                            alt="Source code"
                             width="25"
                             height="25"
                         />
@@ -101,10 +101,15 @@
             aria-labelledby="loginModalLabel"
             aria-hidden="true"
         >
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                        <h5
+                            id="loginModalLabel"
+                            class="modal-title flex-grow-1 text-center"
+                        >
+                            ورود به حساب
+                        </h5>
 
                         <button
                             type="button"
@@ -119,7 +124,9 @@
                     <div class="modal-body">
                         <form id="login-form">
                             <div class="form-group">
-                                <label for="username">Username</label>
+                                <label class="d-block text-right" for="username"
+                                    >شماره تلفن</label
+                                >
 
                                 <input
                                     type="text"
@@ -130,7 +137,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="password">Password</label>
+                                <label class="d-block text-right" for="password"
+                                    >رمز عبور</label
+                                >
 
                                 <input
                                     type="password"
@@ -140,8 +149,11 @@
                                 />
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
-                                Login
+                            <button
+                                type="submit"
+                                class="btn btn-primary d-block w-50 mx-auto"
+                            >
+                                ورود
                             </button>
                         </form>
                     </div>
@@ -157,6 +169,40 @@
             style="left: unset; width: 300px"
             class="fixed-top mh-100 p-2 overflow-auto"
         ></div>
+
+        <!-- Alert Modal -->
+        <div
+            class="modal fade"
+            id="alert-modal"
+            tabindex="-1"
+            role="dialog"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button
+                            type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close"
+                        >
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body text-right"></div>
+
+                    <button
+                        type="button"
+                        class="btn btn-success d-block w-50 mx-auto mb-4"
+                        data-dismiss="modal"
+                    >
+                        تایید
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <script src="./assets/jquery-3.5.1.min.js"></script>
         <script src="./assets/bootstrap.min.js"></script>

@@ -1,6 +1,24 @@
-var RESERVATION_QUEUE = [];
+const RESERVATION_QUEUE = {
+    queue: [],
+    isEmpty() {
+        return !this.queue.length;
+    },
+    add(food, date) {
+        this.queue.push({ food, date });
+    },
+    get() {
+        return this.queue.shift();
+    },
+    remove(foodId, date) {
+        this.queue = this.queue.filter((reservation) => {
+            return (
+                reservation.food.foodId !== foodId && reservation.date !== date
+            );
+        });
+    },
+};
 
-let NARIJE_TOKEN = '';
+let NARIJE_TOKEN = undefined;
 
 const BASE_API_URL = 'https://api.narijeh.com';
 
@@ -79,7 +97,7 @@ function isInSameMonth(firstMoment, secondMoment) {
 }
 
 function changeMonth(step) {
-    if (RESERVATION_QUEUE.length) return;
+    if (!RESERVATION_QUEUE.isEmpty()) return;
 
     const now = moment();
 
@@ -159,23 +177,49 @@ function changeButtonState(button, state) {
 
 // TODO: if day has selected food remove it from queue
 function selectFood(food, date) {
-    const button = getFoodButton({ date, foodId: food.foodId });
+    const foodId = food.foodId;
 
-    const state = button.attr('data-state');
+    const clickedButton = getFoodButton({ date, foodId });
+
+    const state = clickedButton.attr('data-state');
 
     if (state === BUTTON_STATES.RESERVED) return;
 
     if (state === BUTTON_STATES.SELECTED) {
-        changeButtonState(button);
+        changeButtonState(clickedButton);
 
-        RESERVATION_QUEUE = RESERVATION_QUEUE.filter(
-            (reservation) => reservation.food.foodId !== food.foodId,
-        );
-    } else {
-        changeButtonState(button, BUTTON_STATES.SELECTED);
+        RESERVATION_QUEUE.remove(foodId, date);
 
-        RESERVATION_QUEUE.push({ food, date });
+        return;
     }
+
+    const sameDayReservedButton = getFoodButton({
+        date,
+        state: BUTTON_STATES.RESERVED,
+    });
+
+    if (sameDayReservedButton.length) {
+        showAlertModal('شما یک غذای رزرو شده در این روز دارید');
+        return;
+    }
+
+    const sameDaySelectedButton = getFoodButton({
+        date,
+        state: BUTTON_STATES.SELECTED,
+    });
+
+    if (sameDaySelectedButton.length) {
+        changeButtonState(sameDaySelectedButton);
+
+        RESERVATION_QUEUE.remove(
+            Number(sameDaySelectedButton.attr('data-food-id')),
+            date,
+        );
+    }
+
+    changeButtonState(clickedButton, BUTTON_STATES.SELECTED);
+
+    RESERVATION_QUEUE.add(food, date);
 }
 
 function addReserveLog({ type, foodName, date, text }) {
@@ -205,6 +249,14 @@ function addReserveLog({ type, foodName, date, text }) {
     LOGS_CONTAINER.prepend(log);
 
     isSuccess && setTimeout(() => log.alert('close'), 5000);
+}
+
+function showAlertModal(content) {
+    const alertModal = $('#alert-modal');
+
+    alertModal.find('.modal-body').html(content);
+
+    alertModal.modal('show');
 }
 
 async function reserveFood({ food: { food: foodName, foodId }, date }) {
@@ -403,9 +455,9 @@ $('#login-form').on('submit', function (event) {
 });
 
 function processReservationQueue() {
-    if (!RESERVATION_QUEUE.length) return;
+    if (RESERVATION_QUEUE.isEmpty()) return;
 
-    reserveFood(RESERVATION_QUEUE.shift());
+    reserveFood(RESERVATION_QUEUE.get());
 }
 
 setInterval(processReservationQueue, 11000);
