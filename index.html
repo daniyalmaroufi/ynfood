@@ -8,7 +8,7 @@
     </head>
 
     <body>
-        <nav class="navbar navbar-light bg-light">
+        <nav class="navbar navbar-light bg-light sticky-top">
             <div>
                 <a class="navbar-brand" href="#">
                     <img
@@ -22,71 +22,88 @@
                 </a>
             </div>
 
-            <button
-                type="button"
-                id="logout-button"
-                class="btn btn-danger d-none"
-            >
-                Logout
-            </button>
+            <div id="account-button-container"></div>
         </nav>
 
         <div class="container-md mt-3">
-            <div>
-                <div id="month-control" class="d-flex mb-3">
-                    <button
-                        id="previous-month"
-                        class="flex-shrink-0 btn btn-success"
-                        title="ماه قبلی"
-                        onclick="changeMonth(-1)"
-                    >
-                        &lt;
-                    </button>
+            <div id="month-control" class="d-flex mb-3">
+                <button
+                    id="previous-month"
+                    class="flex-shrink-0 btn btn-success"
+                    title="ماه قبلی"
+                    onclick="changeMonth(-1)"
+                >
+                    &lt;
+                </button>
 
-                    <h3 id="current-month" class="flex-grow-1 text-center"></h3>
+                <h3 id="current-month" class="flex-grow-1 text-center"></h3>
 
-                    <button
-                        id="next-month"
-                        class="flex-shrink-0 btn btn-success"
-                        title="ماه بعدی"
-                        onclick="changeMonth(1)"
-                    >
-                        &gt;
-                    </button>
-                </div>
-
-                <hr />
-
-                <div id="food-container"></div>
+                <button
+                    id="next-month"
+                    class="flex-shrink-0 btn btn-success"
+                    title="ماه بعدی"
+                    onclick="changeMonth(1)"
+                >
+                    &gt;
+                </button>
             </div>
 
-            <footer class="fixed-bottom bg-light p-2">
-                <div class="text-center">
-                    Created by
+            <hr />
+
+            <div
+                id="food-container"
+                style="min-height: calc(100vh - 190px)"
+            ></div>
+        </div>
+
+        <footer class="bg-light">
+            <div
+                class="d-flex align-items-center justify-content-between py-2 px-4"
+            >
+                <div>
+                    Made with love ❤️ by
                     <a href="https://daniyalmaroufi.com" target="_blank"
-                        >Daniyal Maroufi</a
-                    >.
+                        >Dani</a
+                    >
+                    &
+                    <a href="https://github.com/SayeMarg" target="_blank"
+                        >Saji</a
+                    >
+                </div>
+
+                <div>
                     <a
                         href="https://github.com/daniyalmaroufi/ynfood"
                         target="_blank"
-                        >Source(Github)</a
                     >
+                        <img
+                            src="./assets/github.svg"
+                            alt="Source code"
+                            width="25"
+                            height="25"
+                        />
+                    </a>
                 </div>
-            </footer>
-        </div>
+            </div>
+        </footer>
 
         <!-- Login Modal -->
         <div
             class="modal fade"
-            id="loginModal"
+            id="login-modal"
             tabindex="-1"
             aria-labelledby="loginModalLabel"
             aria-hidden="true"
         >
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                        <h5
+                            id="loginModalLabel"
+                            class="modal-title flex-grow-1 text-center"
+                        >
+                            ورود به حساب
+                        </h5>
 
                         <button
                             type="button"
@@ -101,7 +118,9 @@
                     <div class="modal-body">
                         <form id="login-form">
                             <div class="form-group">
-                                <label for="username">Username</label>
+                                <label class="d-block text-right" for="username"
+                                    >شماره تلفن</label
+                                >
 
                                 <input
                                     type="text"
@@ -112,7 +131,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="password">Password</label>
+                                <label class="d-block text-right" for="password"
+                                    >رمز عبور</label
+                                >
 
                                 <input
                                     type="password"
@@ -122,8 +143,11 @@
                                 />
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
-                                Login
+                            <button
+                                type="submit"
+                                class="btn btn-primary d-block w-50 mx-auto"
+                            >
+                                ورود
                             </button>
                         </form>
                     </div>
@@ -139,6 +163,40 @@
             style="left: unset; width: 300px"
             class="fixed-top mh-100 p-2 overflow-auto"
         ></div>
+
+        <!-- Alert Modal -->
+        <div
+            class="modal fade"
+            id="alert-modal"
+            tabindex="-1"
+            role="dialog"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button
+                            type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close"
+                        >
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body text-right"></div>
+
+                    <button
+                        type="button"
+                        class="btn btn-success d-block w-50 mx-auto mb-4"
+                        data-dismiss="modal"
+                    >
+                        تایید
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <script src="./assets/jquery-3.5.1.min.js"></script>
         <script src="./assets/bootstrap.min.js"></script>
