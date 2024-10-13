@@ -51,23 +51,29 @@ function getTokenFromStorate() {
     return token;
 }
 
+function showLoginModal() {
+    $('#login-modal').modal('show');
+}
+
 function handleLogout() {
     localStorage.clear();
 
     window.location.reload();
 }
 
-function toggleLogoutButton(show) {
-    const logoutButton = $('#logout-button');
+function toggleAccountButton(isLoggedIn) {
+    const accountButtonContainer = $('#account-button-container');
 
-    if (show) {
-        logoutButton.removeClass('d-none');
-        logoutButton.on('click', handleLogout);
-        return;
-    }
+    const button = $('<button />', {
+        type: 'button',
+        text: isLoggedIn ? 'خروج از حساب' : 'ورود به حساب',
+        class: isLoggedIn ? 'btn-danger' : 'btn-primary',
+        click: isLoggedIn ? handleLogout : showLoginModal,
+    });
 
-    logoutButton.addClass('d-none');
-    logoutButton.off('click', handleLogout);
+    button.addClass('btn');
+
+    accountButtonContainer.html(button);
 }
 
 // TODO: Handle 401 or 403 error
@@ -445,7 +451,7 @@ $('#login-form').on('submit', function (event) {
 
             saveTokenToStorate(data.token, data.expire);
 
-            toggleLogoutButton(true);
+            toggleAccountButton(true);
 
             $('#login-modal').modal('hide');
 
@@ -468,14 +474,14 @@ document.addEventListener('DOMContentLoaded', function () {
     NARIJE_TOKEN = getTokenFromStorate();
 
     if (!NARIJE_TOKEN) {
-        toggleLogoutButton(false);
+        toggleAccountButton(false);
 
-        $('#login-modal').modal('show');
+        showLoginModal();
 
         return;
     }
 
-    toggleLogoutButton(true);
+    toggleAccountButton(true);
 
     getFoods();
 });
