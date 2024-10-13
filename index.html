@@ -8,7 +8,7 @@
     </head>
 
     <body>
-        <nav class="navbar navbar-light bg-light">
+        <nav class="navbar navbar-light bg-light sticky-top">
             <div>
                 <a class="navbar-brand" href="#">
                     <img
@@ -27,58 +27,76 @@
                 id="logout-button"
                 class="btn btn-danger d-none"
             >
-                Logout
+                خروج
             </button>
         </nav>
 
         <div class="container-md mt-3">
-            <div>
-                <div id="month-control" class="d-flex mb-3">
-                    <button
-                        id="previous-month"
-                        class="flex-shrink-0 btn btn-success"
-                        title="ماه قبلی"
-                        onclick="changeMonth(-1)"
-                    >
-                        &lt;
-                    </button>
+            <div id="month-control" class="d-flex mb-3">
+                <button
+                    id="previous-month"
+                    class="flex-shrink-0 btn btn-success"
+                    title="ماه قبلی"
+                    onclick="changeMonth(-1)"
+                >
+                    &lt;
+                </button>
 
-                    <h3 id="current-month" class="flex-grow-1 text-center"></h3>
+                <h3 id="current-month" class="flex-grow-1 text-center"></h3>
 
-                    <button
-                        id="next-month"
-                        class="flex-shrink-0 btn btn-success"
-                        title="ماه بعدی"
-                        onclick="changeMonth(1)"
-                    >
-                        &gt;
-                    </button>
-                </div>
-
-                <hr />
-
-                <div id="food-container"></div>
+                <button
+                    id="next-month"
+                    class="flex-shrink-0 btn btn-success"
+                    title="ماه بعدی"
+                    onclick="changeMonth(1)"
+                >
+                    &gt;
+                </button>
             </div>
 
-            <footer class="fixed-bottom bg-light p-2">
-                <div class="text-center">
-                    Created by
+            <hr />
+
+            <div
+                id="food-container"
+                style="min-height: calc(100vh - 190px)"
+            ></div>
+        </div>
+
+        <footer class="bg-light">
+            <div
+                class="d-flex align-items-center justify-content-between py-2 px-4"
+            >
+                <div>
+                    Made with love ❤️ by
                     <a href="https://daniyalmaroufi.com" target="_blank"
-                        >Daniyal Maroufi</a
-                    >.
+                        >Dani</a
+                    >
+                    &
+                    <a href="https://github.com/SayeMarg" target="_blank"
+                        >Saji</a
+                    >
+                </div>
+
+                <div>
                     <a
                         href="https://github.com/daniyalmaroufi/ynfood"
                         target="_blank"
-                        >Source(Github)</a
                     >
+                        <img
+                            src="./assets/github.svg"
+                            alt="Github"
+                            width="25"
+                            height="25"
+                        />
+                    </a>
                 </div>
-            </footer>
-        </div>
+            </div>
+        </footer>
 
         <!-- Login Modal -->
         <div
             class="modal fade"
-            id="loginModal"
+            id="login-modal"
             tabindex="-1"
             aria-labelledby="loginModalLabel"
             aria-hidden="true"

@@ -395,7 +395,7 @@ $('#login-form').on('submit', function (event) {
 
             toggleLogoutButton(true);
 
-            $('#loginModal').modal('hide');
+            $('#login-modal').modal('hide');
 
             getFoods();
         },
@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!NARIJE_TOKEN) {
         toggleLogoutButton(false);
 
-        $('#loginModal').modal('show');
+        $('#login-modal').modal('show');
 
         return;
     }
