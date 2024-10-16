@@ -466,7 +466,7 @@ function processReservationQueue() {
     reserveFood(RESERVATION_QUEUE.get());
 }
 
-setInterval(processReservationQueue, 11000);
+setInterval(processReservationQueue, 6000);
 
 setCurrentMonthName();
 
