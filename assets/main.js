@@ -3,8 +3,8 @@ const RESERVATION_QUEUE = {
     isEmpty() {
         return !this.queue.length;
     },
-    add(food, date) {
-        this.queue.push({ food, date });
+    add(food, date, isCancel) {
+        this.queue.push({ food, date, isCancel });
     },
     get() {
         return this.queue.shift();
@@ -12,7 +12,7 @@ const RESERVATION_QUEUE = {
     remove(foodId, date) {
         this.queue = this.queue.filter((reservation) => {
             return (
-                reservation.food.foodId !== foodId && reservation.date !== date
+                reservation.food.foodId !== foodId || reservation.date !== date
             );
         });
     },
@@ -27,6 +27,7 @@ let START_DAY = moment();
 const BUTTON_STATES = {
     SELECTED: 'SELECTED',
     RESERVED: 'RESERVED',
+    CANCEL: 'CANCEL',
 };
 
 const LOGS_CONTAINER = $('#toast-container');
@@ -141,62 +142,78 @@ function getFoodButton({ foodId, date, state }) {
 }
 
 function changeButtonState(button, state) {
-    if (state === BUTTON_STATES.SELECTED) {
-        button.addClass('btn-info');
+    button.attr('data-state', state ?? '');
 
-        button.removeClass('btn-primary btn-success');
+    switch (state) {
+        case BUTTON_STATES.SELECTED:
+            button.addClass('btn-info');
 
-        button.html(`
-            در صف رزرو
-            <div class="spinner-border spinner-border-sm" role="status"></div>
-        `);
+            button.removeClass('btn-primary btn-success btn-danger');
 
-        button.attr('data-state', BUTTON_STATES.SELECTED);
+            button.html(`
+                در صف رزرو
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+            `);
 
-        button.removeAttr('disabled', true);
+            return;
 
-        return;
-    }
+        case BUTTON_STATES.RESERVED:
+            button.addClass('btn-success');
 
-    if (state === BUTTON_STATES.RESERVED) {
-        button.addClass('btn-success');
+            button.removeClass('btn-primary btn-info btn-danger');
 
-        button.removeClass('btn-primary btn-info');
+            button.html('رزرو شده');
 
-        button.html('رزرو شده');
+            return;
 
-        button.attr('data-state', BUTTON_STATES.RESERVED);
+        case BUTTON_STATES.CANCEL:
+            button.addClass('btn-danger');
 
-        button.attr('disabled', true);
+            button.removeClass('btn-primary btn-success btn-info');
 
-        return;
+            button.html(`
+                در انتظار لغو
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+            `);
+
+            return;
     }
 
     button.addClass('btn-primary');
 
-    button.removeClass('btn-success btn-info');
+    button.removeClass('btn-success btn-info btn-danger');
 
     button.html('انتخاب');
-
-    button.removeAttr('data-state disabled');
 }
 
-// TODO: if day has selected food remove it from queue
-function selectFood(food, date) {
+function handleFoodButtonClick(food, date) {
     const foodId = food.foodId;
 
     const clickedButton = getFoodButton({ date, foodId });
 
     const state = clickedButton.attr('data-state');
 
-    if (state === BUTTON_STATES.RESERVED) return;
+    switch (state) {
+        case BUTTON_STATES.SELECTED:
+            changeButtonState(clickedButton);
 
-    if (state === BUTTON_STATES.SELECTED) {
-        changeButtonState(clickedButton);
+            RESERVATION_QUEUE.remove(foodId, date);
 
-        RESERVATION_QUEUE.remove(foodId, date);
+            return;
 
-        return;
+        case BUTTON_STATES.RESERVED:
+            changeButtonState(clickedButton, BUTTON_STATES.CANCEL);
+
+            RESERVATION_QUEUE.add(food, date, true);
+
+            return;
+
+        case BUTTON_STATES.CANCEL:
+            changeButtonState(clickedButton, BUTTON_STATES.RESERVED);
+
+            RESERVATION_QUEUE.remove(foodId, date);
+
+            return;
     }
 
     const sameDayReservedButton = getFoodButton({
@@ -205,7 +222,11 @@ function selectFood(food, date) {
     });
 
     if (sameDayReservedButton.length) {
-        showAlertModal('شما یک غذای رزرو شده در این روز دارید');
+        showAlertModal(`
+            شما یک غذای رزرو شده در این روز دارید
+            <br />
+            برای تغییر غذا باید ابتدا غذای رزرو شده در این روز را لغو نمایید    
+        `);
         return;
     }
 
@@ -265,7 +286,11 @@ function showAlertModal(content) {
     alertModal.modal('show');
 }
 
-async function reserveFood({ food: { food: foodName, foodId }, date }) {
+async function orderFood({ food, date, isCancel }) {
+    const foodId = food.foodId;
+
+    const foodName = food.food;
+
     const response = await fetchApi({
         url: 'user/reserves',
         method: 'PUT',
@@ -279,7 +304,7 @@ async function reserveFood({ food: { food: foodName, foodId }, date }) {
                 reserves: [
                     {
                         foodId,
-                        qty: 1,
+                        qty: isCancel ? 0 : 1,
                         foodType: 0,
                     },
                 ],
@@ -292,19 +317,29 @@ async function reserveFood({ food: { food: foodName, foodId }, date }) {
     const button = getFoodButton({ foodId, date });
 
     if (response.status === 200) {
-        console.log(`Successfully reserved ${foodId} for ${date}.`);
+        console.log(
+            date,
+            isCancel ? 'Successfully un-reserved' : 'Successfully reserved',
+            foodName,
+        );
 
         addReserveLog({
             date,
             foodName,
             type: 'success',
-            text: 'با موفقیت رزرو شد',
+            text: isCancel ? 'با موفقیت لغو شد' : 'با موفقیت رزرو شد',
         });
 
-        changeButtonState(button, BUTTON_STATES.RESERVED);
+        changeButtonState(
+            button,
+            isCancel ? undefined : BUTTON_STATES.RESERVED,
+        );
     } else {
         console.error(
-            `Failed to reserve food: ${responseData['message']}, date: ${date}`,
+            date,
+            isCancel ? 'Failed to un-reserve' : 'Faild to reserve',
+            responseData['message'],
+            foodName,
         );
 
         addReserveLog({
@@ -314,7 +349,10 @@ async function reserveFood({ food: { food: foodName, foodId }, date }) {
             text: responseData['message'],
         });
 
-        changeButtonState(button);
+        changeButtonState(
+            button,
+            isCancel ? BUTTON_STATES.RESERVED : undefined,
+        );
     }
 }
 
@@ -355,10 +393,9 @@ function createFoodCard(food, date) {
     const selectButton = $('<button>', {
         class: 'btn d-block w-100',
         text: isReserved ? 'رزرو شده' : 'انتخاب',
-        click: () => selectFood(food, date),
+        click: () => handleFoodButtonClick(food, date),
         'data-food-id': food.foodId,
         'data-date': date,
-        disabled: isReserved,
     });
 
     selectButton.addClass(isReserved ? 'btn-success' : 'btn-primary');
@@ -463,7 +500,7 @@ $('#login-form').on('submit', function (event) {
 function processReservationQueue() {
     if (RESERVATION_QUEUE.isEmpty()) return;
 
-    reserveFood(RESERVATION_QUEUE.get());
+    orderFood(RESERVATION_QUEUE.get());
 }
 
 setInterval(processReservationQueue, 6000);
