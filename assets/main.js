@@ -298,18 +298,16 @@ async function orderFood({ food, date, isCancel }) {
             authorization: `Bearer ${NARIJE_TOKEN}`,
             'content-type': 'application/json',
         },
-        body: [
-            {
-                datetime: date,
-                reserves: [
-                    {
-                        foodId,
-                        qty: isCancel ? 0 : 1,
-                        foodType: 0,
-                    },
-                ],
-            },
-        ],
+        body: {
+            datetime: date,
+            reserves: [
+                {
+                    foodId,
+                    qty: isCancel ? 0 : 1,
+                    foodType: 0,
+                },
+            ],
+        },
     });
 
     const responseData = await response.json();
