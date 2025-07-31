@@ -225,7 +225,7 @@ function handleFoodButtonClick(food, date) {
         showAlertModal(`
             شما یک غذای رزرو شده در این روز دارید
             <br />
-            برای تغییر غذا باید ابتدا غذای رزرو شده در این روز را لغو نمایید    
+            برای تغییر غذا باید ابتدا غذای رزرو شده در این روز را لغو نمایید
         `);
         return;
     }
@@ -374,12 +374,12 @@ async function getBearerToken(username, password) {
 
 function createFoodCard(food, date) {
     const foodCard = $('<div>', {
-        class: 'card col-lg-3 p-1',
+        class: 'card col-6 col-sm-4 col-lg-3 p-1 rounded-0',
         html: `
             <img loading="lazy" class="card-img-top rounded" src="${
                 food.image || 'http://danihost.ir/da512.png'
             }" alt="${food.food}" width="100%" height="200">
-                        
+
             <div class="card-body d-flex flex-column justify-content-between">
                 <h5 class="card-title text-right">${food.food}</h5>
             </div>
@@ -456,8 +456,8 @@ function getFoods() {
 
                 if (hasFood) {
                     const dayFoodsRow = $('<div>', {
-                        class: 'row justify-content-center flex-nowrap p-2',
-                        style: 'gap: 0.5rem',
+                        class: 'row justify-content-center flex-nowrap w-100 overflow-auto',
+                        style: 'direction: rtl;',
                     });
 
                     day.reserves.forEach((food) => {
